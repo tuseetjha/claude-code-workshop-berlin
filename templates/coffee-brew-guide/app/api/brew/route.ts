@@ -50,7 +50,7 @@ Do not include any text outside the JSON object.`;
 
   const response = await client.messages.create({
     model: "claude-opus-4-8",
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [
       {
         role: "user",
@@ -71,10 +71,13 @@ Do not include any text outside the JSON object.`;
 
   const text = response.content[0].type === "text" ? response.content[0].text : "";
 
+  // Strip markdown code fences if Claude wraps the JSON in ```json ... ```
+  const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+
   try {
-    const data = JSON.parse(text);
+    const data = JSON.parse(cleaned);
     return NextResponse.json(data);
   } catch {
-    return NextResponse.json({ error: "Failed to parse brew guide", raw: text }, { status: 500 });
+    return NextResponse.json({ error: "Failed to parse brew guide", raw: cleaned }, { status: 500 });
   }
 }
